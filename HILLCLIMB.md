@@ -1,6 +1,6 @@
 # Hill climb
 
-Gates 0–2 passed. Prefer deleting over adding.
+Gates 0–2 passed. Phase 4 adds plan output. Prefer deleting over adding.
 
 ## Gate 0 ✓
 
@@ -27,13 +27,29 @@ Named fork → Jev picks fork, not vague trap. Live 2026-09-18.
 
 Not checked.
 
-**Why:** North star is one-turn grill + Jev pick among host candidates. Smoke
-stdout already records utterance, candidates, and Jev's pick — enough to debug
-today. A sqlite/JSONL audit store is ceremony before multi-turn sessions are a
-product requirement. You might not need an audit store yet.
+**Why:** North star is multi-turn grill ending in a plan. Smoke stdout already
+records utterance, candidates, picks, and final plan — enough to debug today.
+A sqlite/JSONL audit store is ceremony before you can't reconstruct sessions
+from chat + smoke output alone.
 
-Revisit when: multi-turn sessions ship and you can't reconstruct what was
-asked from chat + smoke output alone.
+Revisit when that reconstruction fails in practice.
+
+## Gate 4 — plan output
+
+Multi-turn session ends in plan markdown; fork never loses to vague; no
+understand-first-only plan when utterance names sync/async.
+
+`python3 scripts/smoke_gate4.py --live`
+
+| Check | Assert |
+| --- | --- |
+| Plan sections | `# Plan`, Goal, Locked calls, Open questions, Next action, Non-goals |
+| Fork trace | Locked or open mentions sync/async — not understand-first-only |
+| Named fork | `"What should we decide?"` never the asked Q when utterance names alternatives |
+| Pick cap | ~4–5 turns max in recipe; smoke uses 2 scripted turns + fold |
+| ask.py DX | gate1/2/4 call `ask.py` via `uv run --with typesafe-sdk` |
+| No teacher | No answer-settle / decided gates in skill or smoke |
+| No router | No `session_kind` / blank-lock maze |
 
 ## Quality bars
 

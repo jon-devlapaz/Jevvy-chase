@@ -137,7 +137,10 @@ def dry_run_report() -> dict[str, Any]:
             "turn2_candidates": REASK_TURN2_CANDIDATES,
             "rule": "filter_asked drops identical candidate text without new state",
         },
-        "live_command": "TYPESAFE_API_KEY=... python3 scripts/smoke_gate2.py --live",
+        "live_command": (
+            "TYPESAFE_API_KEY=... python3 scripts/smoke_gate2.py --live "
+            "(calls ask.py via uv run)"
+        ),
         "ask_path": str(ASK),
     }
 
