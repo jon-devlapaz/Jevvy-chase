@@ -36,7 +36,8 @@ def dry_run_report() -> dict[str, Any]:
         "expected_pick": EXPECTED_PICK,
         "assertion": "pick_next.choice must be the fork candidate, not vague",
         "live_command": (
-            "TYPESAFE_API_KEY=... python3 scripts/smoke_gate1.py --live"
+            "TYPESAFE_API_KEY=... python3 scripts/smoke_gate1.py --live "
+            "(calls ask.py via uv run)"
         ),
         "ask_command": (
             "uv run --isolated --no-project --with typesafe-sdk==0.6.0 "
