@@ -1,12 +1,15 @@
 # Jev question shapes
 
-Exact `instructions` and `criteria` for jevvy-chase. Copy these strings
-exactly — rephrasing between runs silently re-scales every score. Send
-`state` plus `questions` in one call through `scripts/ask.py`.
+Copy `instructions` and `criteria` **exactly** — rephrasing rescales scores
+silently. One `{state, questions}` object per call through `scripts/ask.py`.
 
-## Pick among host-supplied candidates
+## Why these questions
 
-State is the person's words plus the candidate set the host enumerated:
+- **`pick_next`** — which host candidate to ask. This is the product.
+- **`ask_value`** — optional prune when the pool is crowded. Skip if ≤3 candidates and the fork is obvious.
+- **`rec_pick`** — optional ➡️ line when they already named fork alternatives. Skip otherwise.
+
+## State + pick
 
 ```json
 {
@@ -19,8 +22,7 @@ State is the person's words plus the candidate set the host enumerated:
 }
 ```
 
-`pick_next` — Choice. Criteria keys are candidate `id` values; `neither`
-last. Only include candidates you actually sent in `state.candidates`.
+`pick_next` — Choice. Criteria keys = candidate `id` values; `neither` last.
 
 ```json
 {
@@ -35,9 +37,8 @@ last. Only include candidates you actually sent in `state.candidates`.
 }
 ```
 
-`ask_value` — Score. Point at `candidates[0]` in instructions. For extra
-candidates in the same call, add parallel questions pointing at
-`candidates[1]`, `candidates[2]`, …
+`ask_value` — Score. Point at `candidates[0]`; add parallel questions for
+`candidates[1]`, `candidates[2]`, … if pruning.
 
 ```json
 {
@@ -60,11 +61,7 @@ candidates in the same call, add parallel questions pointing at
 }
 ```
 
-## Optional rec among live alternatives
-
-Send `rec_pick` only when the person already named 2–4 live alternatives
-for that candidate. Criteria are those alternatives with `neither` last.
-Skip `rec_pick` when no live fork exists — do not invent options.
+## Optional rec (live alternatives only)
 
 ```json
 {
@@ -80,6 +77,5 @@ Skip `rec_pick` when no live fork exists — do not invent options.
 
 ## Reading answers
 
-`confidence` on Choice/Score is peakedness of the returned distribution,
-not P(correct). Rank on the Score's level (`round(score)` clipped to 0–2),
-not the leftover fraction. For Choice, read the pick and its confidence.
+`confidence` = peakedness, not P(correct). Rank Score by `round(score)` clipped
+0–2. For Choice, read `choice` + `probabilities`.

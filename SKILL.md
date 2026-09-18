@@ -9,109 +9,53 @@ disable-model-invocation: true
 
 # Jevvy-chase
 
-The person types `/jevvy-chase` or `/jevvy`. The agent asks what they want
-to do. **Jev** picks or ranks among **host-supplied candidates** — next
-moves, clarifying questions, or options the agent enumerates. Jev does
-**not** grade the person's answers like a teacher. A confirmed choice is
-**not** a license to implement.
+`/jevvy-chase` or `/jevvy`. Requires `TYPESAFE_API_KEY`. Never put the key in
+state, chat, or repo.
 
-**Requires:** `TYPESAFE_API_KEY` in the environment. If auth fails, stop and
-tell the person to set it. Never put the key in state, questions, chat, or
-repo files.
+## Worked example
 
-## Call Jev
+**Person:** “Migrate checkout sessions to Redis — sync or async writes?”
 
-`ASK` is `scripts/ask.py`. Call it only this way. Copy question shapes from
-[references/jev.md](references/jev.md) exactly.
+**You supply candidates** (`{id, text}`, 2–4 rows):
 
-```
-uv run --isolated --no-project --with typesafe-sdk==0.6.0 python3 /absolute/path/to/this-skill/scripts/ask.py <<'JSON'
-{"state": { }, "questions": { }}
-JSON
-```
+- `fork` → Sync or async session writes?
+- `vague` → What should we decide?
+- `context` → What do you need to understand about Render first?
 
-The script pins `model="jev-1.13.0"`. If that version is missing, stop.
+**One Jev call** (`pick_next` from [references/jev.md](references/jev.md)) →
+`fork`.
 
-Each call is a fresh `{state, questions}`. Jev remembers nothing.
-
-- State for the one-turn pick: `utterance` (their words) and `candidates`
-  (`{id, text}` rows the host supplies).
-- Copy question shapes from [references/jev.md](references/jev.md). Point
-  backticks at those paths.
-
-Do not put skill rules, folder maps, or long essays in state. If deleting a
-field would not change the score, leave it out.
-
-One Jev call per invoke. Questions cannot read each other. Candidates must
-be real next moves or clarifying questions grounded in the utterance — do
-not invent a menu so Jev has something to pick.
-
-## Loop
+**Show:**
 
 ```
-1 Open → 2 Weigh/pick → 3 Propose → stop
-```
-
-### 1. Open
-
-If they typed only `/jevvy-chase` or `/jevvy`, ask this and wait:
-
-```
-What do you want to do? Answer in your own words.
-```
-
-If the first message already answers that, use it. That text is the
-`utterance`.
-
-### 2. Weigh / pick (one Jev call)
-
-The host (you) supplies a **small** set of candidates — typically 2–4 next
-moves or clarifying questions derived from the utterance. Each candidate
-needs `{id, text}`.
-
-Build state from [references/jev.md](references/jev.md). Send one call
-through `ASK` with `pick_next` and/or `ask_value` as documented there.
-
-Rank or pick among **those candidates only**. Do not add options the person
-did not imply.
-
-### 3. Propose
-
-Show the top candidate. One numbered question:
-
-```
-❓ **Q1** - **<candidate text>**
-```
-
-If Jev returned a recommendation line for a fork, show it after ➡️. Otherwise:
-
-```
+❓ **Q1** - **Sync or async session writes?**
 Answer in your own words.
 ```
 
-**Stop here.** Do not implement. Do not start a multi-turn interview,
-sqlite audit, or answer-settle gate. Confirming is not a license to
-implement.
+Stop. Do not implement.
 
-## Stay in lane
+**Illegal:** inventing a menu so Jev has something to pick; grading the
+person's answer; sqlite audit; answer-settle / teacher gates.
 
-**One path is enough.** Use `pick_next` (and optional `ask_value` to
-prune) only. Question-side tags like explore, lock, or collect shape
-**host candidate lists** — there is no `session_kind` router.
+## Recipe
 
-- **Prune:** drop a candidate when `ask_value` rounds to 0 and
-  confidence ≥ 0.8. Remove it from the pool before the next pick.
-- **No sticky re-ask:** never propose candidate text already asked in
-  this session unless `answers` (or other new state) changed. Filter
-  the pool before calling Jev.
-- **Rec line (➡️):** only when the person already named live
-  alternatives for that candidate. Otherwise show “Answer in your own
-  words.” No dummy fork menu.
+1. **Open** — No utterance yet? Ask: `What do you want to do? Answer in your own words.`
+2. **Pick** — `{utterance, candidates}` + `pick_next` → call `scripts/ask.py` once. Shapes from [references/jev.md](references/jev.md), copied exactly.
+3. **Propose** — Top candidate as Q1. ➡️ rec line **only** if they already named live alternatives. Stop.
 
-Jev still grades **host-supplied candidates** only — never run
-answer-settle or teacher gates on the person's reply.
+```
+uv run --isolated --no-project --with typesafe-sdk==0.6.0 python3 /absolute/path/to/this-skill/scripts/ask.py <<'JSON'
+{"state": {"utterance": "...", "candidates": [{"id": "...", "text": "..."}]}, "questions": {"pick_next": {...}}}
+JSON
+```
 
-## What the person sees
+Model: `jev-1.13.0` only. Jev remembers nothing between calls — keep state small.
 
-The bare invoke question, or one proposed next move. No session ids, no
-lookup narration, no teacher-style grading of their reply.
+## Hard rules
+
+- **Host supplies candidates. Jev picks among them.** No other path.
+- Optional **`ask_value`**: drop a candidate when score rounds to 0 and confidence ≥ 0.8.
+- **No sticky re-ask:** filter out candidate text already asked unless `answers` changed.
+- **➡️ rec:** only when live alternatives exist in their words. No dummy fork menu.
+- **No router:** no `session_kind`, blank-lock, or explore/lock/collect maze. Tags (if any) only shape *your* candidate list before the Jev call.
+- **No answer-teacher:** Jev never grades the person's reply.
