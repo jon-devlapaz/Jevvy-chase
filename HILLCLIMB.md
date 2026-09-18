@@ -41,13 +41,28 @@ HILLCLIMB.md, LICENSE.
 - Agent asks or proposes the top move; user answers in their own words.
 - Stop early; no implement.
 
-### Gate 1
+### Gate 1 checklist
 
-Scripted dogfood (or smoke) shows: named fork utterance → Jev sees the
-fork candidates → top question/option is the fork (not a vague “what should
-we decide?”). Document pass/fail in `research/` or here.
+- [x] **Named fork utterance** — sync vs async Redis writes
+  (`scripts/smoke_gate1.py` → `SCENARIO.utterance`).
+- [x] **Host supplies fork + vague trap** — candidates `fork`, `vague`,
+  `context` in the smoke payload.
+- [x] **One Jev call among host candidates** — `pick_next` Choice via
+  `scripts/ask.py`.
+- [x] **Top pick is the fork** — live smoke `actual_pick: fork`, `vague`
+  probability 0.02 (2026-09-18).
 
-**Status:** not started (document only).
+**Evidence:**
+
+| Check | Path | How to verify |
+| --- | --- | --- |
+| Smoke harness | `scripts/smoke_gate1.py` | `--dry-run` default; `--live` with key |
+| Result note | `research/gate1-smoke.md` | pass/fail + commands |
+| Live run | `python3 scripts/smoke_gate1.py --live` | `status: passed`, `actual_pick: fork` |
+
+**CI without key:** `python3 scripts/smoke_gate1.py` exits 0 with
+`status: skipped` and prints the candidate set + expected winner. Run
+`--live` locally when `TYPESAFE_API_KEY` is set to satisfy the gate.
 
 ## Phase 2 — Stay in lane
 

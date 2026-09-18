@@ -46,7 +46,7 @@ One Jev call per invoke. Questions cannot read each other. Candidates must
 be real next moves or clarifying questions grounded in the utterance — do
 not invent a menu so Jev has something to pick.
 
-## Loop (Phase 0)
+## Loop
 
 ```
 1 Open → 2 Weigh/pick → 3 Propose → stop
