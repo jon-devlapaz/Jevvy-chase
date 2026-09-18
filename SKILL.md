@@ -93,6 +93,24 @@ Answer in your own words.
 sqlite audit, or answer-settle gate. Confirming is not a license to
 implement.
 
+## Stay in lane
+
+**One path is enough.** Use `pick_next` (and optional `ask_value` to
+prune) only. Question-side tags like explore, lock, or collect shape
+**host candidate lists** — there is no `session_kind` router.
+
+- **Prune:** drop a candidate when `ask_value` rounds to 0 and
+  confidence ≥ 0.8. Remove it from the pool before the next pick.
+- **No sticky re-ask:** never propose candidate text already asked in
+  this session unless `answers` (or other new state) changed. Filter
+  the pool before calling Jev.
+- **Rec line (➡️):** only when the person already named live
+  alternatives for that candidate. Otherwise show “Answer in your own
+  words.” No dummy fork menu.
+
+Jev still grades **host-supplied candidates** only — never run
+answer-settle or teacher gates on the person's reply.
+
 ## What the person sees
 
 The bare invoke question, or one proposed next move. No session ids, no

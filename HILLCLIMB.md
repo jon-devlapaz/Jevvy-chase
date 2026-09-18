@@ -74,12 +74,29 @@ HILLCLIMB.md, LICENSE.
   one session without new state.
 - Rec line only when live alternatives exist.
 
-### Gate 2
+### Gate 2 checklist
 
-Dogfood matrix (≤6 utterances) with question-side tags; zero `blank_lock`
-on named forks; no sticky identical re-ask.
+- [x] **One path documented** — `pick_next` only; tags shape host candidates,
+  no `session_kind` router (`scripts/smoke_gate2.py` → `routing: one_path`).
+- [x] **Dogfood matrix (6 utterances)** — tags: `named_fork`×2, `explore`,
+  `lock`, `collect_issues`, `wish`.
+- [x] **Zero blank_lock on named forks** — live `named_fork_blank_locks: 0`
+  (2026-09-18).
+- [x] **No sticky identical re-ask** — re-ask sub-smoke: turn-2 text differs
+  after `filter_asked` + simulated `answers`.
 
-**Status:** not started.
+**Evidence:**
+
+| Check | Path | How to verify |
+| --- | --- | --- |
+| Matrix smoke | `scripts/smoke_gate2.py` | `--live` with key |
+| Shared helpers | `scripts/smoke_common.py` | `filter_asked`, `build_pick_payload` |
+| Lane rules | `SKILL.md` § Stay in lane | prune / re-ask / rec rules |
+| Result note | `research/gate2-smoke.md` | matrix table + pass/fail |
+
+**CI without key:** `python3 scripts/smoke_gate2.py` exits 0 with
+`status: skipped` and prints matrix tags + expected picks. Run `--live`
+locally when `TYPESAFE_API_KEY` is set.
 
 ## Phase 3 — Audit (optional)
 

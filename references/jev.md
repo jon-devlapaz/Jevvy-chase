@@ -60,6 +60,24 @@ candidates in the same call, add parallel questions pointing at
 }
 ```
 
+## Optional rec among live alternatives
+
+Send `rec_pick` only when the person already named 2–4 live alternatives
+for that candidate. Criteria are those alternatives with `neither` last.
+Skip `rec_pick` when no live fork exists — do not invent options.
+
+```json
+{
+  "type": "choice",
+  "instructions": "Given `utterance` and `answers`, which option leads best for `candidates[0]`?",
+  "criteria": {
+    "sync": "Sync: simpler crash story",
+    "async": "Async: protects p99",
+    "neither": "Neither fits; the question needs reframing"
+  }
+}
+```
+
 ## Reading answers
 
 `confidence` on Choice/Score is peakedness of the returned distribution,

@@ -6,14 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-ENV_KEY = "TYPESAFE_API_KEY"
-SKILL_ROOT = Path(__file__).resolve().parent.parent
-ASK = SKILL_ROOT / "scripts" / "ask.py"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from smoke_common import ASK, ENV_KEY, build_pick_payload, call_jev, pick_choice
+
 EXPECTED_PICK = "fork"
 
 SCENARIO = {
@@ -26,27 +25,6 @@ SCENARIO = {
         {"id": "context", "text": "What do you need to understand about Render first?"},
     ],
 }
-
-
-def build_payload() -> dict[str, Any]:
-    criteria = {c["id"]: c["text"] for c in SCENARIO["candidates"]}
-    criteria["neither"] = "None of these fits; the set needs reframing"
-    return {
-        "state": {
-            "utterance": SCENARIO["utterance"],
-            "candidates": SCENARIO["candidates"],
-        },
-        "questions": {
-            "pick_next": {
-                "type": "choice",
-                "instructions": (
-                    "Given `utterance`, which candidate is the best next move "
-                    "or clarifying question?"
-                ),
-                "criteria": criteria,
-            }
-        },
-    }
 
 
 def dry_run_report() -> dict[str, Any]:
@@ -67,29 +45,9 @@ def dry_run_report() -> dict[str, Any]:
     }
 
 
-def call_jev(payload: dict[str, Any]) -> dict[str, Any]:
-    proc = subprocess.run(
-        [sys.executable, str(ASK)],
-        input=json.dumps(payload),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if proc.returncode != 0:
-        try:
-            err = json.loads(proc.stdout or proc.stderr or "{}")
-        except json.JSONDecodeError:
-            err = {"error": (proc.stdout or proc.stderr or "ask.py failed").strip()}
-        raise RuntimeError(err.get("error", "ask.py failed"))
-    body = json.loads(proc.stdout)
-    if "error" in body:
-        raise RuntimeError(body["error"])
-    return body
-
-
 def evaluate(body: dict[str, Any]) -> dict[str, Any]:
     pick_block = body.get("answers", {}).get("pick_next", {})
-    choice = pick_block.get("choice")
+    choice = pick_choice(body)
     passed = choice == EXPECTED_PICK
     return {
         "gate": 1,
@@ -143,7 +101,9 @@ def main() -> int:
         return 0
 
     try:
-        body = call_jev(build_payload())
+        body = call_jev(
+            build_pick_payload(SCENARIO["utterance"], SCENARIO["candidates"])
+        )
         report = evaluate(body)
     except RuntimeError as exc:
         json.dump(

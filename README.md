@@ -43,14 +43,18 @@ uv run --isolated --no-project --with typesafe-sdk==0.6.0 \
 
 Reports whether `TYPESAFE_API_KEY` is set without printing the value.
 
-## Smoke (Gate 1)
+## Smoke
 
 ```bash
-python3 ~/.agents/skills/jevvy-chase/scripts/smoke_gate1.py          # dry-run / skip if no key
-python3 ~/.agents/skills/jevvy-chase/scripts/smoke_gate1.py --live   # live fork-pick proof
+python3 ~/.agents/skills/jevvy-chase/scripts/smoke_gate1.py --live   # Gate 1 fork-pick
+python3 ~/.agents/skills/jevvy-chase/scripts/smoke_gate2.py --live   # Gate 2 matrix
 ```
 
-See [research/gate1-smoke.md](research/gate1-smoke.md) for the latest result.
+Without `--live` or without `TYPESAFE_API_KEY`, both exit 0 and print a
+dry-run / skip summary (CI-friendly).
+
+Results: [research/gate1-smoke.md](research/gate1-smoke.md),
+[research/gate2-smoke.md](research/gate2-smoke.md).
 
 ## Roadmap
 
